@@ -1,2 +1,52 @@
 ---
 # tasks file for ansible-unifi
+
+- name: "Debian RaspberryPi | install dependencies"
+  sudo: yes
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+    cache_valid_time: 3600
+  with_items:
+    - oracle-java7-jdk
+    - git-core build-essential
+    - scons
+    - libpcre++-dev
+    - libboost-dev
+    - libboost-program-options-dev
+    - libboost-thread-dev
+    - libboost-filesystem-dev
+  when:
+    ansible_os_family: 'Debian'
+    ansible_architecture: 'armv6l'
+  tags:
+    - dependency
+
+- name: "RaspberryPi | clone mongodb"
+  git:
+    repo: git://github.com/devinbabb/mongopi.git
+    dest: /tmp/
+  when:
+    ansible_architecture: 'armv6l'
+  tags:
+    - dependency
+
+- name: "RaspberryPi | build mongodb"
+  command: scons
+  args:
+    chdir: /tmp/mongopi
+  when:
+    ansible_architecture: 'armv6l'
+  tags:
+    - dependency
+
+- name: "RaspberryPi | install mongodb"
+  sudo: yes
+  command: scons --prefix=/opt/mongo install
+  args:
+    chdir: /tmp/mongopi
+  when:
+    ansible_architecture: 'armv6l'
+  tags:
+    - dependency
